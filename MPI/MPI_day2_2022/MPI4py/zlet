@@ -1,0 +1,9 @@
+
+ls -ltra
+qstat 
+ls -ltra
+
+
+ls -ltra
+qsub run_sge_gpu.sh
+ls -ltra

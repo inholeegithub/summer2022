@@ -1,0 +1,43 @@
+! Solve Laplace equation using Jacobi iteration method
+! Kadin Tseng, Boston University, November 1999
+
+MODULE jacobi_module
+  IMPLICIT NONE
+  INTEGER, PARAMETER :: real4 = selected_real_kind(6,37)
+  INTEGER, PARAMETER :: real8 = selected_real_kind(15,307)
+  REAL(real8), DIMENSION(:,:), ALLOCATABLE         :: unew
+  REAL(real8), DIMENSION(:,:), ALLOCATABLE, TARGET :: u  ! solution array
+  REAL(real8) :: tol=1.d-4, gdel=1.0d0
+  REAL(real4) :: start_time, end_time
+  INTEGER :: m, iter = 0
+  PUBLIC
+
+CONTAINS
+  SUBROUTINE bc(u, m)
+! PDE: Laplacian u = 0;      0<=x<=1;  0<=y u(1:m  ,1:m  )          ! i  ,j    Current/Central for 1<=i<=m; 1<=j u(1:m  ,2:m+1)          ! i  ,j+1  North (of Current)
+e => u(2:m+1,1:m  )          ! i+1,j    East  (of Current)
+w => u(0:m-1,1:m  )          ! i-1,j    West  (of Current)
+s => u(1:m  ,0:m-1)          ! i  ,j-1  South (of Current)
+
+CALL bc(u, m)                ! set up boundary values
+
+DO WHILE (gdel > tol)        ! iterate until error below threshold
+  iter = iter + 1            ! increment iteration counter
+  IF(iter > 5000) THEN
+    WRITE(*,*)'Iteration terminated (exceeds 5000)'
+    STOP                     ! nonconvergent solution
+  ENDIF
+  unew = ( n + e + w + s )*0.25 ! new solution, Eq. 3
+  gdel = MAXVAL(DABS(unew-c))    ! find local max error
+  IF(MOD(iter,10)==0) WRITE(*,"('iter,gdel:',i6,e12.4)")iter,gdel
+  c = unew                   ! update interior u
+ENDDO
+
+CALL CPU_TIME(end_time)      ! stop timer
+PRINT *,'Total cpu time =',end_time - start_time,' x 1'
+PRINT *,'Stopped at iteration =',iter
+PRINT *,'The maximum error =',gdel
+
+DEALLOCATE (unew, u)
+
+END PROGRAM Jacobi

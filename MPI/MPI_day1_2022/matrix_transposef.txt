@@ -1,0 +1,88 @@
+ program matrix_transpose
+      implicit none
+      integer n, m, nv, nl, mv, ml, i, il, iv, j, jl, jv
+      integer p, ndim, reorder, ierr, grid_comm
+      integer master, me, Iam, source, dest, tag
+      parameter (n=9, m=8, nv=3, mv=2, nl=n/nv, ml=m/mv)
+      parameter (ndim=2, reorder=1)
+      integer a(nl,ml), at(ml, nl), b(m,n)
+      include "mpif.h"  !! This brings in pre-defined MPI constants, ...
+      integer dims(ndim), coord(ndim), req
+      logical period(ndim)
+      integer status(MPI_STATUS_SIZE)
+
+      data master/0/    !! 0 is defined as the master processor
+      data period/.false.,.false./  !! no cyclic boundary in either index
+      data tag/0/       !! a tag is not required in this case, set it to zero
+      data dest/0/      !! results are sent back to master
+
+c**Starts MPI processes ...
+      call MPI_Init(ierr)                            !! starts MPI
+      call MPI_Comm_rank(MPI_COMM_WORLD, Iam, ierr)  !! get current process id
+      call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)    !! get number of processes
+
+c**create cartesian topology for matrix
+      dims(1) = nv
+      dims(2) = mv
+      call MPI_Cart_create(MPI_COMM_WORLD, ndim, dims,
+     &       period, reorder, grid_comm, ierr)
+      call MPI_Comm_rank(grid_comm, me, ierr)
+      call MPI_Cart_coords(grid_comm, me, ndim, coord, ierr)
+      iv = coord(1)
+      jv = coord(2)
+
+c**define local matrix according to virtual grid coordinates, (iv,jv)
+      do jl=1,ml
+        do il=1,nl
+          i = il + iv*nl
+          j = jl + jv*ml
+          a(il,jl) = i*10 + j
+        enddo
+      enddo
+
+c**perform transpose on local matrix
+      do jl=1,ml
+        do il=1,nl
+          at(jl,il) = a(il,jl)
+        enddo
+      enddo
+
+c**send "at" to Master for asembly and printing
+      call MPI_Isend(at, ml*nl, MPI_INTEGER, Master, tag,
+     &       grid_comm, req, ierr)
+
+c**Master asembles all local transposes into final matrix and print
+      if(Iam .eq. Master)call asemble(at,ml,nl,grid_comm,b,m,n,p)
+
+      call MPI_Wait(req, status, ierr)       !! make sure all sends done
+
+      call MPI_Finalize(ierr)                !! let MPI finish up ...
+
+      end
+      subroutine asemble(at,ml,nl,comm,b,m,n,p)
+      implicit none
+      include "mpif.h"
+      integer ml, nl, comm, tag, source, m, n, ierr, p, ndim
+      integer iv, jv, i, j, il, jl, coord(2)
+      integer b(m,n), at(ml,nl), status(MPI_STATUS_SIZE)
+      data tag, ndim/0,2/
+
+c**The Master asembles the final (transposed) matrix from local copies and print
+      do source=0,p-1
+        call MPI_Cart_coords(comm, source, ndim, coord, ierr)
+        call MPI_Recv(at,ml*nl, MPI_INTEGER, source, tag, comm,
+     &       status, ierr)
+        iv = coord(1)
+        jv = coord(2)
+        do jl=1,nl
+          j = jl + iv*nl       ! swap iv and jv for transpose
+          do il=1,ml
+            i = il + jv*ml
+            b(i,j) = at(il,jl)
+          enddo
+        enddo
+      enddo
+      write(*,'(9i5)')((b(i,j),j=1,n),i=1,m)
+
+      return
+      end

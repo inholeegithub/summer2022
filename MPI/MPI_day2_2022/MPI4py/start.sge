@@ -1,0 +1,17 @@
+#!/bin/bash
+#$ -V
+#$ -cwd
+#$ -S /bin/bash
+#$ -N mpi4py
+#$ -j y
+### Total used process count numbers on cpu_openmpi
+#$ -pe cpu_openmpi 12
+#$ -q cpu
+#$ -R yes
+
+NPROCS=$NSLOTS
+
+# your job
+mpirun -np $NPROCS ./hello.py > output
+
+

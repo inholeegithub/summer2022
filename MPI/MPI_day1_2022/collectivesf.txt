@@ -1,0 +1,88 @@
+      program collectives
+      implicit none
+      integer p, ierr, i, Iam, root
+       include "mpif.h"  !! This brings in pre-defined MPI constants, ...
+      character*1 x(0:3), y(0:3), alphabets(0:15), a
+      data alphabets/'a','b','c','d','e','f','g','h','i','j','k','l',
+     &               'm','n','o','p'/
+      data root/1/      !! 1 is the data sender or originator
+
+c**Starts MPI processes ...
+      call MPI_Init(ierr)                            !! starts MPI
+      call MPI_Comm_rank(MPI_COMM_WORLD, Iam, ierr)  !! get current process id
+      call MPI_Comm_size(MPI_COMM_WORLD, p, ierr)    !! get number of processes
+      if (Iam .eq. 0) then
+        write(*,*)
+        write(*,*)'* This program demonstrates the use of collective',
+     &            ' MPI functions'
+        write(*,*)'* Four processors are to be used for the demo'
+        write(*,*)'* Process 1 (of 0,1,2,3) is the designated root'
+        write(*,*)
+        write(*,*)
+        write(*,*)'  Function      Proc      Sendbuf         Recvbuf'
+        write(*,*)'  --------      ----      -------         -------'
+      endif
+      call MPI_Barrier(MPI_COMM_WORLD,ierr)
+c**Performs a gather operation
+      a = alphabets(Iam)
+      do i=0,p-1
+        y(i) = ' '
+      enddo
+      call MPI_Gather(a,1,MPI_CHARACTER,       ! send buf,count,type
+     &                y,1,MPI_CHARACTER,       ! recv buf,count,type
+     &                root,                    ! root (data origin)
+     &                MPI_COMM_WORLD,ierr)     ! comm,flag
+      
+      write(*,"('MPI_Gather:',t20,i2,(3x,a1),t40,4(3x,a1))")Iam,a,y
+
+      call MPI_Barrier(MPI_COMM_WORLD,ierr)
+c**Performs an all-gather operation
+      a = alphabets(Iam)
+      do i=0,p-1
+        y(i) = ' '
+      enddo
+      call MPI_Allgather(a,1,MPI_CHARACTER,    ! send buf,count,type
+     &                   y,1,MPI_CHARACTER,    ! recv buf,count,type
+     &                   MPI_COMM_WORLD,ierr)  ! comm,flag
+      
+      write(*,"('MPI_Allgather:',t20,i2,(3x,a1),t40,4(3x,a1))")Iam,a,y
+      call MPI_Barrier(MPI_COMM_WORLD,ierr)
+c**Perform a scatter operation
+      do i=0,p-1
+        x(i) = alphabets(i+Iam*p)
+        y(i) = ' '
+      enddo
+      call MPI_scatter(x,1,MPI_CHARACTER,      ! send buf,count,type
+     &                 y,1,MPI_CHARACTER,      ! recv buf,count,type
+     &                 root,                   ! data origin
+     &                 MPI_COMM_WORLD,ierr)    ! comm,flag
+
+      write(*,"('MPI_scatter:',t20,i2,4(3x,a1),t40,4(3x,a1))")Iam,x,y
+      call MPI_Barrier(MPI_COMM_WORLD,ierr)
+c**Perform an all-to-all operation
+      do i=0,p-1
+        x(i) = alphabets(i+Iam*p)
+        y(i) = ' '
+      enddo
+      call MPI_Alltoall(x,1,MPI_CHARACTER,     ! send buf,count,type
+     &                  y,1,MPI_CHARACTER,     ! recv buf,count,type
+     &                  MPI_COMM_WORLD,ierr)   ! comm,flag
+
+      write(*,"('MPI_Alltoall:',t20,i2,4(3x,a1),t40,4(3x,a1))")Iam,x,y
+      call MPI_Barrier(MPI_COMM_WORLD,ierr)
+c**Performs a broadcast operation
+      a = ' '
+      do i=0,p-1
+        y(i) = ' '
+      enddo
+      if(Iam .eq. root) then
+        a = 'b'
+        y(0) = a
+      endif
+      call MPI_Bcast(a,1,MPI_CHARACTER,          ! buf,count,type
+     &               root,MPI_COMM_WORLD,ierr) ! root,comm,flag
+      
+      write(*,"('MPI_Bcast:',t20,i2,4(3x,a1),t40,4(3x,a1))")Iam,y,a
+
+      call MPI_Finalize(ierr)                        !! let MPI finish up ...
+      end

@@ -1,0 +1,83 @@
+Program Example1_3
+c#######################################################################
+c#                                                                     #
+c# This is an MPI example on parallel integration to demonstrate the   #
+c# use of:                                                             #
+c#                                                                     #
+c# * MPI_Init, MPI_Comm_rank, MPI_Comm_size, MPI_Finalize              #
+c# * MPI_Recv, MPI_Isend, MPI_Wait                                     #
+C# * MPI_ANY_SOURCE, MPI_ANY_TAG                                       #
+c#                                                                     #
+c# Dr. Kadin Tseng                                                     #
+c# Scientific Computing and Visualization                              #
+c# Boston University                                                   #
+c# 1998                                                                #
+c#                                                                     #
+c#######################################################################
+      implicit none
+      integer n, p, i, j, proc, ierr, master, myid, tag, comm, request
+      real h, a, b, integral, pi, ai, my_int, integral_sum
+      include "mpif.h"  ! brings in pre-defined MPI constants, ...
+      integer status(MPI_STATUS_SIZE)     ! size defined in mpif.h
+      data master/0/    ! processor 0 collects integral sums from other processors
+
+      comm = MPI_COMM_WORLD       
+      call MPI_Init(ierr)                        ! starts MPI
+      call MPI_Comm_rank(comm, myid, ierr)      ! get current proc ID
+      call MPI_Comm_size(comm, p, ierr)          ! get number of procs
+
+      pi = acos(-1.0)   !  = 3.14159...
+      a = 0.0           ! lower limit of integration
+      b = pi/2.         ! upper limit of integration
+      n = 500           ! number of increments in each partition
+      tag = 123         ! tag is additional way to identify a message
+      h = (b-a)/n/p     ! length of increment
+
+      ai = a + myid*n*h ! lower limit of integration for partition myid
+      my_int = integral(ai, h, n)      ! integral on processor myid
+      write(*,*)'myid=',myid,',  my_int=',my_int
+
+      if(myid .eq. master) then               ! the following is serial
+        integral_sum = my_int
+        do proc=1,p-1
+          call MPI_Recv( 
+     &       my_int, 1, MPI_REAL,  
+     &       MPI_ANY_SOURCE,      ! message source
+     &       MPI_ANY_TAG,          ! message tag
+     &       comm, status, ierr)      ! status identifies source, tag
+          integral_sum = integral_sum + my_int
+        enddo
+        write(*,*)'The Integral =', integral_sum   ! sum of my_int
+      else
+        call MPI_Isend(   
+     &     my_int, 1, MPI_REAL,    ! buffer, size, datatype
+     &     master, tag,            ! destination and tag
+     &     comm, request, ierr)   ! get handle for MPI_Wait to check status
+        call other_work(myid)     ! because of Isend, gets here immediately
+        call MPI_Wait(request, status, ierr)   ! block until Isend is done
+      endif
+
+      call MPI_Finalize(ierr)                   ! let MPI finish up ...
+
+      end
+
+      subroutine other_work(myid)
+      implicit none
+      integer myid
+      write(*,"('more work on process ',i3)") myid
+      return
+      end
+
+      real function integral(ai, h, n)
+      implicit none
+      integer n, j
+      real h, ai, aij
+
+      integral = 0.0                ! initialize integral
+      do j=0,n-1                    ! sum integrals
+        aij = ai +(j+0.5)*h         ! abscissa mid-point
+        integral = integral + cos(aij)*h
+      enddo
+
+      return
+      end

@@ -1,0 +1,47 @@
+Program Example1
+
+c#######################################################################
+c#                                                                     #
+c# This is an MPI example on parallel integration                      #
+c# Demonstrate here is the serial program.                             #
+c#                                                                     #
+c# Dr. Kadin Tseng                                                     #
+c# Scientific Computing and Visualization                              #
+c# Boston University                                                   #
+c# 1998                                                                #
+c#                                                                     #
+c#######################################################################
+      implicit none
+      integer n, p, i, j
+      real h, integral_sum, a, b, integral, pi
+
+      pi = acos(-1.0)   !  = 3.14159...
+      a = 0.0           ! lower limit of integration
+      b = pi*1./2.      ! upper limit of integration
+      p = 4             ! number of processes (partitions)
+      n = 500           ! number of increment within eachprocess
+      h = (b-a)/n/p     ! length of increment
+
+      integral_sum = 0.0      ! stores answer to the integral
+      do i=0,p-1        ! sum of integrals over all processes
+        ai = a + i*n*h  ! lower limit of integration for partition i
+        integral_sum = integral_sum + integral(ai,h,n)
+      enddo
+
+      print *,'The integral_sum =', integral_sum
+
+      stop
+      end
+      real function integral(ai, h, n)
+      implicit none
+      integer n, j
+      real h, ai, aij
+
+      integral = 0.0                ! initialize integral
+      do j=0,n-1                    ! sum integrals
+        aij = ai +(j+0.5)*h         ! abscissa mid-point
+        integral = integral + cos(aij)*h
+      enddo
+
+      return
+      end

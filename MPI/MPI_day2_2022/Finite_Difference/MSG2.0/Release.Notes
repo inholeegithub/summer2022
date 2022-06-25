@@ -1,0 +1,32 @@
+
+                      Release Notes
+
+
+ Message-Passing Toolkit for Structured Grid Communications
+            
+                       version 2.0
+
+
+This document describes the main differences between the MSG version 1.1
+and the version 2.0
+---------------------------------------------------------------------
+
+The MSG routines now have their own communicator (in the MPI sense)
+associated with them. They can be safely combined within the same code
+with any other MPI calls. The MPI can be initialized before 
+MSG_enable is executed. If MPI has not been initialized before
+the call to MSG_enable then MSG_enable will initialize it for you. 
+
+MSG_disable does not call MPI_FINALIZE anymore. Otherwise it would
+detach the task from the MPI. MSG_disable now simply frees the
+communicator associated with the MSG routines. It is necessary 
+to call MPI_FINALIZE at the end of a user code to avoid leaving zombie 
+processes behind.
+
+By default, the same communication pattern can not be applied to different
+arrays having the same shape since the send/receive routines try place
+data directly into the local arrays whenever possible. 
+In order to be able to apply the same pattern to different arrays 
+the MSG must be compiled with the switch -DBUFFER_ALWAYS.
+
+

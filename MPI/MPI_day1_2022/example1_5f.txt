@@ -1,0 +1,74 @@
+Program Example1_5
+c#######################################################################
+c#                                                                     #
+c# This is an MPI example on parallel integration to demonstrate the   #
+c# use of:                                                             #
+c#                                                                     #
+c# * MPI_Init, MPI_Comm_rank, MPI_Comm_size, MPI_Finalize              #
+c# * MPI_Reduce                                                        #
+c# * MPI_SUM                                                           #
+c#                                                                     #
+c# Dr. Kadin Tseng                                                     #
+c# Scientific Computing and Visualization                              #
+c# Boston University                                                   #
+c# 1998                                                                #
+c#                                                                     #
+c#######################################################################
+      implicit none
+      integer n, p, i, j, proc, ierr, master, myid, tag, comm
+      real h, a, b, integral, pi, ai, my_int, integral_sum
+      include "mpif.h"  ! brings in pre-defined MPI constants, ...
+      integer status(MPI_STATUS_SIZE)  ! size defined in mpif.h
+      data master/0/    ! processor 0 collects integral sums from other processors
+
+      comm = MPI_COMM_WORLD       
+      call MPI_Init(ierr)                        ! starts MPI
+      call MPI_Comm_rank(comm, myid, ierr)       ! get current proc ID
+      call MPI_Comm_size(comm, p, ierr)          ! get number of procs
+
+      pi = acos(-1.0)                            !  = 3.141592...
+      a = 0.0                                    ! lower limit of integration
+      b = pi/2.                                  ! upper limit of integration
+      tag = 123                                  ! message tag
+
+      if(myid .eq. master) then
+        print *,'The requested number of processors =',p
+        print *,'enter number of increments within each process'
+        read(*,*)n
+      endif
+c**Broadcast "n" to all processes defined by "comm"
+      call MPI_Bcast(               ! Broadcast "n" to all procs
+     &    n, 1, MPI_INTEGER,        ! Buffer, size, data type
+     &    master, comm, ierr)       ! source of message
+
+      h = (b-a)/n/p                 ! length of increment
+      ai = a + myid*n*h             ! lower limit of integration for partition myid
+      my_int = integral(ai, h, n) 
+
+     write(*,"('Process ',i2,' has the partial sum of',f10.6)")
+     &          myid,my_int
+
+      call MPI_Reduce(                     ! a collective reduction operation
+     &      my_int,                        ! message to send
+     &      integral_sum, 1, MPI_REAL,     ! Triplet of receive buffer, size, data type
+     &      MPI_SUM,      ! Reduction operator
+     &      master,   
+     &      comm, ierr)
+
+      if(myid .eq. master) then
+        print *,'The Integral =',integral_sum
+                           endif
+      call MPI_Finalize(ierr)              ! let MPI finish up ...
+      end
+      real function integral(ai, h, n)
+      implicit none
+      integer n, j
+      real h, ai, aij
+
+      integral = 0.0                    ! initialize integral
+      do j=0,n-1                        ! sum integrals
+        aij = ai +(j+0.5)*h             ! abscissa mid-point
+        integral = integral + cos(aij)*h
+      enddo
+      return
+      end

@@ -1,0 +1,64 @@
+
+
+  Message-passing tools for Structured Grid Communications
+------------------------------------------------------------
+
+Message-passing tools for Structured Grid communications (MSG) is a
+MPI-based library intended to simplify coding of data exchange 
+within the FORTRAN 77 codes performing data transfers on distributed Cartesian
+grids. The FORTRAN 77 binding of the current version is essential since
+all the MSG routines assume the FORTRAN 77 arrays order (first index
+changes first).
+
+The main goal of the library is to conceal the explicit send/receive
+operations and provide means to place the boundary data into local arrays.
+The MSG tools can be employed by finite-difference, finite-volume,
+or finite-element codes which use Cartesian (tensor-product) grids.   
+They can be used with any other MPI-based library.
+The necessity to rewrite existing sequential FORTRAN 77 codes
+in the MIMD style was the main reason behind the MSG project.
+The developers of these codes needed to have efficient 
+data exchange tools while preserving their code and data structures 
+learning all the details of message-passing.
+
+More information can be found at the MSG web page:
+http://www.cerca.umontreal.ca/~malevsky/MSG/MSG.html
+
+This directory contains:
+========================
+
+Version 2.0 of the Message-passing tools for Structured Grid Communications 
+------------------------------------------------------------------------------
+
+MSG.h
+mpi_param_fort.h
+geom_param_fort.h
+mpi_msg.F
+tp_setup.F
+wc_timer.c
+
+Can be compiled for both single and double precision floating point numbers.
+
+To compile with the single precision, specify PRECISION = SINGLE
+in the makefile.
+To compile with the double precision, specify PRECISION = DOUBLE
+in the makefile.
+
+Driver: jacobi2DMSG2.F
+---------------------
+
+A finite-difference 2D Poisson solver using the 
+MSG routines for communications. 
+It uses a cross-shaped communication patterns (north-south and east-west)
+to handle a non-complete (five-point) 2D stencil.
+
+MSG user's guide
+----------------
+
+MSG.ps - MSG user's guide (postscript).
+
+Version 2.0 release notes
+-------------------------
+
+Release.notes - intended for the users of the version 1.1
+
