@@ -9,9 +9,8 @@ it's rank and the size of the current MPI run (Total number of
 processors).
 ************************************************************/
 void lam_darwin_malloc_linker_hack(){};
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
+
 {
     int myid, numprocs;
     FILE *f1;

@@ -6,9 +6,8 @@ Shows how to use MPI_Type_vector to send noncontiguous blocks of data
 #include <stdlib.h>
 #include <mpi.h>
 #include <math.h>
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
+
 {
     int myid, numprocs,mpi_err;
 #define SIZE 25

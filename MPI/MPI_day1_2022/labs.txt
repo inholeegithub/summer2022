@@ -10,7 +10,7 @@ MPI Program Examples
 #include "mpi.h"
 
 int main(argc, argv)
-int argc;
+
 char **argv;
 {
    int rank, size;
@@ -29,7 +29,7 @@ char **argv;
 #include "mpi.h"
 
 int main(argc, argv)
-int argc;
+
 char **argv;
 {
    int rank, size, n, to, from, tagno;
@@ -85,7 +85,7 @@ char **argv;
 
 
 int main(argc, argv)
-int argc;
+
 char **argv;
 {
   MPI_Status status;
@@ -393,7 +393,7 @@ typedef enum{FALSE, TRUE} BOOLEAN;
 #define N_DIMS 2
 
 main(argc, argv) 
-int argc;
+
 char **argv;
 {
     MPI_Comm comm_2d, row_comm, col_comm;
@@ -498,7 +498,7 @@ Process (0, 1): Row sum = 1, Col sum = 4
 #include 
  
 int main(argc, argv)
-int argc;
+
 char **argv;
 {
     int myrank, size ;

@@ -8,9 +8,8 @@ Index gives rank in new communicator.
 #include <stdlib.h>
 #include <mpi.h>
 #include <math.h>
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
+
 {
     int myid, numprocs;
     int color,Zero_one,new_id,new_nodes;
