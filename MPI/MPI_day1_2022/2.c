@@ -1,9 +1,9 @@
 #include "mpi.h"
 #include <stdio.h>
 
-int main(argc,argv) 
-int argc;
-char *argv[];  {
+int main(int argc, char *argv[]) 
+
+  {
 int numtasks, rank, dest, source, rc, count, tag=1;  
 char inmsg, outmsg='x';
 MPI_Status Stat;
